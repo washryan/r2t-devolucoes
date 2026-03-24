@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Equipamentos</title>
+  <title>Devoluções Reversa - R2T</title>
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after {
@@ -288,6 +288,63 @@
     .estado-vazio p {
       font-size: 0.92rem;
     }
+
+    /* ===== FILTROS ===== */
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    @media (max-width: 620px) {
+      .filtros-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .filtro-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .filtro-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .filtro-group select {
+      background: #f7f9fc;
+      border: 1.5px solid #d1d9e6;
+    }
+
+    .btn-limpar-filtros {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: transparent;
+      border: 1.5px solid #d1d9e6;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #5a6a7e;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+      align-self: flex-end;
+    }
+
+    .btn-limpar-filtros:hover {
+      border-color: #1a6bca;
+      color: #1a6bca;
+    }
   </style>
 </head>
 <body>
@@ -296,8 +353,8 @@
 
     <!-- Cabeçalho -->
     <header>
-      <h1>Controle de Equipamentos</h1>
-      <p>Cadastro e rastreamento de equipamentos no processo logístico</p>
+      <h1>Devolução de Reversa - R2T</h1>
+      <p>Cadastro e rastreamento de equipamentos devolvidos no processo logístico</p>
     </header>
 
     <!-- Formulário -->
@@ -314,8 +371,21 @@
 
           <div class="form-group">
             <label for="tecnico">Técnico</label>
-            <input type="text" id="tecnico" placeholder="Nome do técnico" autocomplete="off" />
-            <span class="mensagem-erro" id="erro-tecnico">Informe o nome do técnico.</span>
+            <select id="tecnico">
+              <option value="">Selecione o técnico...</option>
+              <option value="tecum">Anderson Dantas de Brito</option>
+              <option value="tecdois">Allison de Souza Lino</option>
+              <option value="tectres">Antonio de Araujo Ferreira</option>
+              <option value="tecqua">Caio Cezar Bezerra Ferreira</option>
+              <option value="tecqui">Danrley Nascimento dos Santos</option>
+              <option value="tecsex">Diego da Silva Medrado</option>
+              <option value="tecset">Douglas Matos Amorim</option>
+              <option value="tecoit">Fernando Barbosa de Araujo</option>
+              <option value="tecnov">Leilson Mattos de Souza</option>
+              <option value="tecdez">Rogério Fé de Souza</option>
+              <option value="teconz">Ronaldo Soares Santos</option>
+            </select>
+            <span class="mensagem-erro" id="erro-tecnico">Selecione o técnico responsável.</span>
           </div>
 
           <div class="form-group">
@@ -343,7 +413,45 @@
     <!-- Tabela -->
     <div class="card">
       <h2>Equipamentos Cadastrados</h2>
-      <p class="contador">Total: <span id="total">0</span> registro(s)</p>
+      <!-- Filtros -->
+      <div class="filtros-grid">
+        <div class="filtro-group">
+          <label for="filtro-tecnico">Técnico</label>
+          <select id="filtro-tecnico">
+            <option value="">Selecione o técnico...</option>
+            <option value="">Todos</option>
+              <option value="tecum">Anderson Dantas de Brito</option>
+              <option value="tecdois">Allison de Souza Lino</option>
+              <option value="tectres">Antonio de Araujo Ferreira</option>
+              <option value="tecqua">Caio Cezar Bezerra Ferreira</option>
+              <option value="tecqui">Danrley Nascimento dos Santos</option>
+              <option value="tecsex">Diego da Silva Medrado</option>
+              <option value="tecset">Douglas Matos Amorim</option>
+              <option value="tecoit">Fernando Barbosa de Araujo</option>
+              <option value="tecnov">Leilson Mattos de Souza</option>
+              <option value="tecdez">Rogério Fé de Souza</option>
+              <option value="teconz">Ronaldo Soares Santos</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label for="filtro-status">Status</label>
+          <select id="filtro-status">
+            <option value="">Todos</option>
+            <option value="Suspeito">Suspeito</option>
+            <option value="Inicializado">Inicializado</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label for="filtro-classificacao">Classificação</label>
+          <select id="filtro-classificacao">
+            <option value="">Todos</option>
+            <option value="Reversa">Reversa</option>
+            <option value="Normal">Normal</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="contador">Exibindo <span id="total-filtrado">0</span> de <span id="total">0</span> registro(s)</p>
       <div class="tabela-wrapper">
         <table id="tabela">
           <thead>
@@ -378,16 +486,27 @@
     const CHAVE_STORAGE = 'equipamentos_logistica';
 
     // ============================================================
+    // LISTA FIXA DE TÉCNICOS
+    // ============================================================
+    const TECNICOS = ['tecum', 'tecdois', 'tectres', 'tecqua', 'tecquin', 'tecsex', 'tecset', 'tecoit', 'tecnov', 'tecdez', 'teconz'];
+
+    // ============================================================
     // SELECIONA ELEMENTOS DO DOM
     // ============================================================
-    const form         = document.getElementById('formEquipamento');
-    const inputSerial  = document.getElementById('serial');
-    const inputTecnico = document.getElementById('tecnico');
-    const selectStatus = document.getElementById('status');
-    const corpoTabela  = document.getElementById('corpo-tabela');
-    const estadoVazio  = document.getElementById('estado-vazio');
-    const totalEl      = document.getElementById('total');
-    const toast        = document.getElementById('toast');
+    const form              = document.getElementById('formEquipamento');
+    const inputSerial       = document.getElementById('serial');
+    const selectTecnico     = document.getElementById('tecnico');
+    const selectStatus      = document.getElementById('status');
+    const corpoTabela       = document.getElementById('corpo-tabela');
+    const estadoVazio       = document.getElementById('estado-vazio');
+    const totalEl           = document.getElementById('total');
+    const totalFiltradoEl   = document.getElementById('total-filtrado');
+    const toast             = document.getElementById('toast');
+
+    // Filtros
+    const filtroTecnico      = document.getElementById('filtro-tecnico');
+    const filtroStatus       = document.getElementById('filtro-status');
+    const filtroClassificacao = document.getElementById('filtro-classificacao');
 
     // ============================================================
     // CARREGAR DADOS DO localStorage
@@ -425,15 +544,41 @@
     }
 
     // ============================================================
+    // OBTER FILTROS ATIVOS
+    // ============================================================
+    function obterFiltros() {
+      return {
+        tecnico:       filtroTecnico.value,
+        status:        filtroStatus.value,
+        classificacao: filtroClassificacao.value
+      };
+    }
+
+    // ============================================================
+    // APLICAR FILTROS SOBRE A LISTA
+    // ============================================================
+    function aplicarFiltros(lista, filtros) {
+      return lista.filter(function(item) {
+        if (filtros.tecnico && item.tecnico !== filtros.tecnico) return false;
+        if (filtros.status  && item.status  !== filtros.status)  return false;
+        if (filtros.classificacao && item.classificacao !== filtros.classificacao) return false;
+        return true;
+      });
+    }
+
+    // ============================================================
     // RENDERIZAR A TABELA
     // ============================================================
     function renderizarTabela(novoId) {
-      const lista = carregarDados();
+      const lista    = carregarDados();
+      const filtros  = obterFiltros();
+      const filtrada = aplicarFiltros(lista, filtros);
+
       corpoTabela.innerHTML = '';
+      totalEl.textContent        = lista.length;
+      totalFiltradoEl.textContent = filtrada.length;
 
-      totalEl.textContent = lista.length;
-
-      if (lista.length === 0) {
+      if (filtrada.length === 0) {
         estadoVazio.style.display = 'block';
         return;
       }
@@ -441,7 +586,7 @@
       estadoVazio.style.display = 'none';
 
       // Exibe do mais recente para o mais antigo
-      const listaOrdenada = [...lista].reverse();
+      const listaOrdenada = [...filtrada].reverse();
 
       listaOrdenada.forEach(function(item) {
         const tr = document.createElement('tr');
@@ -450,11 +595,8 @@
           tr.classList.add('nova-linha');
         }
 
-        // Badge status
         const classeStatus = item.status === 'Suspeito' ? 'badge-suspeito' : 'badge-inicializado';
-
-        // Badge classificação
-        const classeClass = item.classificacao === 'Reversa' ? 'badge-reversa' : 'badge-normal';
+        const classeClass  = item.classificacao === 'Reversa' ? 'badge-reversa' : 'badge-normal';
 
         tr.innerHTML = `
           <td><strong>${escapeHtml(item.serial)}</strong></td>
@@ -473,7 +615,7 @@
     // ============================================================
     function escapeHtml(texto) {
       const div = document.createElement('div');
-      div.appendChild(document.createTextNode(texto));
+      div.appendChild(document.createTextNode(String(texto || '')));
       return div.innerHTML;
     }
 
@@ -493,8 +635,7 @@
     function validarFormulario() {
       let valido = true;
 
-      // Reseta estilos de erro
-      [inputSerial, inputTecnico, selectStatus].forEach(function(el) {
+      [inputSerial, selectTecnico, selectStatus].forEach(function(el) {
         el.classList.remove('erro');
       });
       document.querySelectorAll('.mensagem-erro').forEach(function(el) {
@@ -507,8 +648,8 @@
         valido = false;
       }
 
-      if (!inputTecnico.value.trim()) {
-        inputTecnico.classList.add('erro');
+      if (!selectTecnico.value) {
+        selectTecnico.classList.add('erro');
         document.getElementById('erro-tecnico').classList.add('visivel');
         valido = false;
       }
@@ -526,11 +667,11 @@
     // LIMPAR FORMULÁRIO
     // ============================================================
     function limparFormulario() {
-      inputSerial.value  = '';
-      inputTecnico.value = '';
-      selectStatus.value = '';
+      inputSerial.value   = '';
+      selectTecnico.value = '';
+      selectStatus.value  = '';
 
-      [inputSerial, inputTecnico, selectStatus].forEach(function(el) {
+      [inputSerial, selectTecnico, selectStatus].forEach(function(el) {
         el.classList.remove('erro');
       });
       document.querySelectorAll('.mensagem-erro').forEach(function(el) {
@@ -547,12 +688,12 @@
       if (!validarFormulario()) return;
 
       const novoEquipamento = {
-        id:             Date.now(),
-        serial:         inputSerial.value.trim(),
-        tecnico:        inputTecnico.value.trim(),
-        status:         selectStatus.value,
-        classificacao:  obterClassificacao(selectStatus.value),
-        data:           obterDataAtual()
+        id:            Date.now(),
+        serial:        inputSerial.value.trim(),
+        tecnico:       selectTecnico.value,
+        status:        selectStatus.value,
+        classificacao: obterClassificacao(selectStatus.value),
+        data:          obterDataAtual()
       };
 
       const lista = carregarDados();
@@ -562,6 +703,15 @@
       limparFormulario();
       renderizarTabela(novoEquipamento.id);
       mostrarToast();
+    });
+
+    // ============================================================
+    // FILTROS: ATUALIZAM A TABELA AUTOMATICAMENTE
+    // ============================================================
+    [filtroTecnico, filtroStatus, filtroClassificacao].forEach(function(el) {
+      el.addEventListener('change', function() {
+        renderizarTabela(null);
+      });
     });
 
     // ============================================================
