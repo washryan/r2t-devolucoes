@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Equipamentos</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ===== CABEÇALHO ===== */
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0d1b2a;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #5a6a7e;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a6bca;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8f0fc;
+    }
+
+    /* ===== FORMULÁRIO ===== */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input[type="text"],
+    select {
+      padding: 10px 14px;
+      border: 1.5px solid #d1d9e6;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #1a1a2e;
+      background: #f7f9fc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      width: 100%;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #1a6bca;
+      box-shadow: 0 0 0 3px rgba(26, 107, 202, 0.12);
+      background: #ffffff;
+    }
+
+    input[type="text"].erro,
+    select.erro {
+      border-color: #e53e3e;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12);
+    }
+
+    .mensagem-erro {
+      font-size: 0.78rem;
+      color: #e53e3e;
+      display: none;
+    }
+
+    .mensagem-erro.visivel {
+      display: block;
+    }
+
+    /* ===== BOTÃO ===== */
+    .btn-cadastrar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 28px;
+      background-color: #1a6bca;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-cadastrar:hover {
+      background-color: #155aa8;
+    }
+
+    .btn-cadastrar:active {
+      transform: scale(0.98);
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a6bca;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== TABELA ===== */
+    .tabela-wrapper {
+      overflow-x: auto;
+    }
+
+    .contador {
+      font-size: 0.82rem;
+      color: #5a6a7e;
+      margin-bottom: 14px;
+    }
+
+    .contador span {
+      font-weight: 700;
+      color: #1a6bca;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead tr {
+      background-color: #e8f0fc;
+    }
+
+    thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #1a6bca;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #edf2f7;
+      transition: background-color 0.15s;
+    }
+
+    tbody tr:hover {
+      background-color: #f7f9fc;
+    }
+
+    tbody tr.nova-linha {
+      animation: destacar 0.6s ease;
+    }
+
+    @keyframes destacar {
+      0%   { background-color: #dbeafe; }
+      100% { background-color: transparent; }
+    }
+
+    tbody td {
+      padding: 11px 14px;
+      color: #2d3748;
+      vertical-align: middle;
+    }
+
+    /* ===== BADGES ===== */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-suspeito {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .badge-inicializado {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-reversa {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-normal {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    /* ===== ESTADO VAZIO ===== */
+    .estado-vazio {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a0aec0;
+    }
+
+    .estado-vazio svg {
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    .estado-vazio p {
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Cabeçalho -->
+    <header>
+      <h1>Controle de Equipamentos</h1>
+      <p>Cadastro e rastreamento de equipamentos no processo logístico</p>
+    </header>
+
+    <!-- Formulário -->
+    <div class="card">
+      <h2>Cadastrar Equipamento</h2>
+      <form id="formEquipamento" novalidate>
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="serial">Serial</label>
+            <input type="text" id="serial" placeholder="Ex: SN-00123456" autocomplete="off" />
+            <span class="mensagem-erro" id="erro-serial">Informe o serial do equipamento.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="tecnico">Técnico</label>
+            <input type="text" id="tecnico" placeholder="Nome do técnico" autocomplete="off" />
+            <span class="mensagem-erro" id="erro-tecnico">Informe o nome do técnico.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="">Selecione...</option>
+              <option value="Suspeito">Suspeito</option>
+              <option value="Inicializado">Inicializado</option>
+            </select>
+            <span class="mensagem-erro" id="erro-status">Selecione um status.</span>
+          </div>
+
+          <div class="form-group" style="justify-content: flex-end;">
+            <label style="visibility: hidden;">Ação</label>
+            <button type="submit" class="btn-cadastrar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Cadastrar
+            </button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+      <h2>Equipamentos Cadastrados</h2>
+      <p class="contador">Total: <span id="total">0</span> registro(s)</p>
+      <div class="tabela-wrapper">
+        <table id="tabela">
+          <thead>
+            <tr>
+              <th>Serial</th>
+              <th>Técnico</th>
+              <th>Status</th>
+              <th>Classificação</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela">
+            <!-- Linhas geradas via JS -->
+          </tbody>
+        </table>
+        <div class="estado-vazio" id="estado-vazio">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <p>Nenhum equipamento cadastrado ainda.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast de confirmação -->
+  <div class="toast" id="toast">Equipamento cadastrado com sucesso!</div>
+
+  <script>
+    // ============================================================
+    // CHAVE DO localStorage
+    // ============================================================
+    const CHAVE_STORAGE = 'equipamentos_logistica';
+
+    // ============================================================
+    // SELECIONA ELEMENTOS DO DOM
+    // ============================================================
+    const form         = document.getElementById('formEquipamento');
+    const inputSerial  = document.getElementById('serial');
+    const inputTecnico = document.getElementById('tecnico');
+    const selectStatus = document.getElementById('status');
+    const corpoTabela  = document.getElementById('corpo-tabela');
+    const estadoVazio  = document.getElementById('estado-vazio');
+    const totalEl      = document.getElementById('total');
+    const toast        = document.getElementById('toast');
+
+    // ============================================================
+    // CARREGAR DADOS DO localStorage
+    // ============================================================
+    function carregarDados() {
+      const dados = localStorage.getItem(CHAVE_STORAGE);
+      return dados ? JSON.parse(dados) : [];
+    }
+
+    // ============================================================
+    // SALVAR DADOS NO localStorage
+    // ============================================================
+    function salvarDados(lista) {
+      localStorage.setItem(CHAVE_STORAGE, JSON.stringify(lista));
+    }
+
+    // ============================================================
+    // DETERMINAR CLASSIFICAÇÃO COM BASE NO STATUS
+    // ============================================================
+    function obterClassificacao(status) {
+      return status === 'Suspeito' ? 'Reversa' : 'Normal';
+    }
+
+    // ============================================================
+    // FORMATAR DATA ATUAL
+    // ============================================================
+    function obterDataAtual() {
+      const agora = new Date();
+      const dia   = String(agora.getDate()).padStart(2, '0');
+      const mes   = String(agora.getMonth() + 1).padStart(2, '0');
+      const ano   = agora.getFullYear();
+      const hora  = String(agora.getHours()).padStart(2, '0');
+      const min   = String(agora.getMinutes()).padStart(2, '0');
+      return `${dia}/${mes}/${ano} ${hora}:${min}`;
+    }
+
+    // ============================================================
+    // RENDERIZAR A TABELA
+    // ============================================================
+    function renderizarTabela(novoId) {
+      const lista = carregarDados();
+      corpoTabela.innerHTML = '';
+
+      totalEl.textContent = lista.length;
+
+      if (lista.length === 0) {
+        estadoVazio.style.display = 'block';
+        return;
+      }
+
+      estadoVazio.style.display = 'none';
+
+      // Exibe do mais recente para o mais antigo
+      const listaOrdenada = [...lista].reverse();
+
+      listaOrdenada.forEach(function(item) {
+        const tr = document.createElement('tr');
+
+        if (item.id === novoId) {
+          tr.classList.add('nova-linha');
+        }
+
+        // Badge status
+        const classeStatus = item.status === 'Suspeito' ? 'badge-suspeito' : 'badge-inicializado';
+
+        // Badge classificação
+        const classeClass = item.classificacao === 'Reversa' ? 'badge-reversa' : 'badge-normal';
+
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(item.serial)}</strong></td>
+          <td>${escapeHtml(item.tecnico)}</td>
+          <td><span class="badge ${classeStatus}">${escapeHtml(item.status)}</span></td>
+          <td><span class="badge ${classeClass}">${escapeHtml(item.classificacao)}</span></td>
+          <td>${escapeHtml(item.data)}</td>
+        `;
+
+        corpoTabela.appendChild(tr);
+      });
+    }
+
+    // ============================================================
+    // PREVENÇÃO DE XSS: ESCAPE DE HTML
+    // ============================================================
+    function escapeHtml(texto) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(texto));
+      return div.innerHTML;
+    }
+
+    // ============================================================
+    // MOSTRAR TOAST
+    // ============================================================
+    function mostrarToast() {
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 2800);
+    }
+
+    // ============================================================
+    // VALIDAR FORMULÁRIO
+    // ============================================================
+    function validarFormulario() {
+      let valido = true;
+
+      // Reseta estilos de erro
+      [inputSerial, inputTecnico, selectStatus].forEach(function(el) {
+        el.classList.remove('erro');
+      });
+      document.querySelectorAll('.mensagem-erro').forEach(function(el) {
+        el.classList.remove('visivel');
+      });
+
+      if (!inputSerial.value.trim()) {
+        inputSerial.classList.add('erro');
+        document.getElementById('erro-serial').classList.add('visivel');
+        valido = false;
+      }
+
+      if (!inputTecnico.value.trim()) {
+        inputTecnico.classList.add('erro');
+        document.getElementById('erro-tecnico').classList.add('visivel');
+        valido = false;
+      }
+
+      if (!selectStatus.value) {
+        selectStatus.classList.add('erro');
+        document.getElementById('erro-status').classList.add('visivel');
+        valido = false;
+      }
+
+      return valido;
+    }
+
+    // ============================================================
+    // LIMPAR FORMULÁRIO
+    // ============================================================
+    function limparFormulario() {
+      inputSerial.value  = '';
+      inputTecnico.value = '';
+      selectStatus.value = '';
+
+      [inputSerial, inputTecnico, selectStatus].forEach(function(el) {
+        el.classList.remove('erro');
+      });
+      document.querySelectorAll('.mensagem-erro').forEach(function(el) {
+        el.classList.remove('visivel');
+      });
+    }
+
+    // ============================================================
+    // CADASTRAR EQUIPAMENTO
+    // ============================================================
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      if (!validarFormulario()) return;
+
+      const novoEquipamento = {
+        id:             Date.now(),
+        serial:         inputSerial.value.trim(),
+        tecnico:        inputTecnico.value.trim(),
+        status:         selectStatus.value,
+        classificacao:  obterClassificacao(selectStatus.value),
+        data:           obterDataAtual()
+      };
+
+      const lista = carregarDados();
+      lista.push(novoEquipamento);
+      salvarDados(lista);
+
+      limparFormulario();
+      renderizarTabela(novoEquipamento.id);
+      mostrarToast();
+    });
+
+    // ============================================================
+    // INICIALIZAÇÃO: CARREGA TABELA AO ABRIR A PÁGINA
+    // ============================================================
+    renderizarTabela(null);
+  </script>
+
+</body>
+</html>
