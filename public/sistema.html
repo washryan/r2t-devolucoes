@@ -345,6 +345,129 @@
       border-color: #1a6bca;
       color: #1a6bca;
     }
+
+    /* ===== BOTÃO EXCLUIR ===== */
+    .btn-excluir {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      background: transparent;
+      border: 1.5px solid #fca5a5;
+      border-radius: 7px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #dc2626;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-excluir:hover {
+      background-color: #fef2f2;
+      border-color: #dc2626;
+    }
+
+    .btn-excluir:active {
+      background-color: #fee2e2;
+    }
+
+    /* ===== MODAL DE CONFIRMAÇÃO ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 40, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.visivel {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px 32px;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      transform: translateY(-10px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.visivel .modal {
+      transform: translateY(0);
+    }
+
+    .modal-icone {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .modal h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0d1b2a;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      font-size: 0.88rem;
+      color: #5a6a7e;
+      text-align: center;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .modal-acoes {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-cancelar {
+      flex: 1;
+      padding: 9px 0;
+      background: transparent;
+      border: 1.5px solid #d1d9e6;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #5a6a7e;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-cancelar:hover {
+      border-color: #1a6bca;
+      color: #1a6bca;
+    }
+
+    .btn-confirmar-exclusao {
+      flex: 1;
+      padding: 9px 0;
+      background: #dc2626;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-confirmar-exclusao:hover {
+      background-color: #b91c1c;
+    }
   </style>
 </head>
 <body>
@@ -461,6 +584,7 @@
               <th>Status</th>
               <th>Classificação</th>
               <th>Data</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="corpo-tabela">
@@ -478,6 +602,19 @@
 
   <!-- Toast de confirmação -->
   <div class="toast" id="toast">Equipamento cadastrado com sucesso!</div>
+
+  <!-- Modal de confirmação de exclusão -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-icone">🗑️</div>
+      <h3 id="modal-titulo">Excluir registro?</h3>
+      <p>Tem certeza que deseja excluir este equipamento? Esta ação não pode ser desfeita.</p>
+      <div class="modal-acoes">
+        <button class="btn-cancelar" id="btn-cancelar">Cancelar</button>
+        <button class="btn-confirmar-exclusao" id="btn-confirmar-exclusao">Excluir</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ============================================================
@@ -504,9 +641,15 @@
     const toast             = document.getElementById('toast');
 
     // Filtros
-    const filtroTecnico      = document.getElementById('filtro-tecnico');
-    const filtroStatus       = document.getElementById('filtro-status');
+    const filtroTecnico       = document.getElementById('filtro-tecnico');
+    const filtroStatus        = document.getElementById('filtro-status');
     const filtroClassificacao = document.getElementById('filtro-classificacao');
+
+    // Modal de exclusão
+    const modalOverlay        = document.getElementById('modal-overlay');
+    const btnCancelar         = document.getElementById('btn-cancelar');
+    const btnConfirmarExclusao = document.getElementById('btn-confirmar-exclusao');
+    let idParaExcluir = null;
 
     // ============================================================
     // CARREGAR DADOS DO localStorage
@@ -604,6 +747,11 @@
           <td><span class="badge ${classeStatus}">${escapeHtml(item.status)}</span></td>
           <td><span class="badge ${classeClass}">${escapeHtml(item.classificacao)}</span></td>
           <td>${escapeHtml(item.data)}</td>
+          <td>
+            <button class="btn-excluir" data-id="${item.id}" aria-label="Excluir equipamento ${escapeHtml(item.serial)}">
+              🗑️ Excluir
+            </button>
+          </td>
         `;
 
         corpoTabela.appendChild(tr);
@@ -618,6 +766,60 @@
       div.appendChild(document.createTextNode(String(texto || '')));
       return div.innerHTML;
     }
+
+    // ============================================================
+    // ABRIR / FECHAR MODAL DE EXCLUSÃO
+    // ============================================================
+    function abrirModal(id) {
+      idParaExcluir = id;
+      modalOverlay.classList.add('visivel');
+    }
+
+    function fecharModal() {
+      idParaExcluir = null;
+      modalOverlay.classList.remove('visivel');
+    }
+
+    // ============================================================
+    // EXCLUIR EQUIPAMENTO
+    // ============================================================
+    function excluirEquipamento(id) {
+      const lista    = carregarDados();
+      const novaLista = lista.filter(function(item) {
+        return item.id !== id;
+      });
+      salvarDados(novaLista);
+      renderizarTabela(null);
+    }
+
+    // ============================================================
+    // DELEGAÇÃO DE EVENTOS: BOTÕES EXCLUIR NA TABELA
+    // ============================================================
+    corpoTabela.addEventListener('click', function(event) {
+      const btn = event.target.closest('.btn-excluir');
+      if (!btn) return;
+      const id = Number(btn.dataset.id);
+      abrirModal(id);
+    });
+
+    // Confirmar exclusão
+    btnConfirmarExclusao.addEventListener('click', function() {
+      if (idParaExcluir !== null) {
+        excluirEquipamento(idParaExcluir);
+      }
+      fecharModal();
+    });
+
+    // Cancelar / fechar modal
+    btnCancelar.addEventListener('click', fecharModal);
+
+    modalOverlay.addEventListener('click', function(event) {
+      if (event.target === modalOverlay) fecharModal();
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') fecharModal();
+    });
 
     // ============================================================
     // MOSTRAR TOAST
