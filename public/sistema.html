@@ -1107,6 +1107,17 @@
     }
 
     // ============================================================
+    // VERIFICAR SE SERIAL JÁ EXISTE (case-insensitive + trim)
+    // ============================================================
+    function serialJaExiste(serial) {
+      const lista = carregarDados();
+      const serialNormalizado = serial.trim().toUpperCase();
+      return lista.some(function (item) {
+        return item.serial.trim().toUpperCase() === serialNormalizado;
+      });
+    }
+
+    // ============================================================
     // VALIDAR FORMULÁRIO
     // ============================================================
     function validarFormulario() {
@@ -1119,9 +1130,19 @@
         el.classList.remove('visivel');
       });
 
+      const erroSerialEl = document.getElementById('erro-serial');
+
       if (!inputSerial.value.trim()) {
         inputSerial.classList.add('erro');
-        document.getElementById('erro-serial').classList.add('visivel');
+        erroSerialEl.textContent = 'Informe o serial do equipamento.';
+        erroSerialEl.classList.add('visivel');
+        inputSerial.focus();
+        valido = false;
+      } else if (serialJaExiste(inputSerial.value)) {
+        inputSerial.classList.add('erro');
+        erroSerialEl.textContent = 'Este serial ja esta cadastrado no sistema.';
+        erroSerialEl.classList.add('visivel');
+        inputSerial.focus();
         valido = false;
       }
 
@@ -1198,4 +1219,5 @@
   </script>
 
 </body>
+
 </html>
